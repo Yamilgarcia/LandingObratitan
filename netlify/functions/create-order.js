@@ -1,6 +1,6 @@
 // Netlify Function: POST /create-order
 // Crea la orden en PayPal en el servidor (seguro).
-// Usa credenciales desde variables de entorno de Netlify.
+// Usa credenciales desde variables de entorno de Netlify.s
 
 const PLANS = {
   basic:      { amount: '10.00', desc: 'ObraTitan Basic (mensual)' },
