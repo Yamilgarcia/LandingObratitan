@@ -179,3 +179,10 @@ function animateCounter(el){
 new IntersectionObserver((ents, obs)=>{
   ents.forEach(e=>{ if(e.isIntersecting){ e.target.querySelectorAll('.counter').forEach(animateCounter); obs.unobserve(e.target); } });
 },{ threshold:.4 }).observe(document.querySelector('.kpis'));
+
+
+ (function(){
+    if (document.querySelector('.floating-cta')) {
+      document.body.classList.add('with-fab');
+    }
+  })();
