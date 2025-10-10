@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ObraTitan — PWA para gestión de obras</title>
+    <meta name="theme-color" content="#e3a008" />
+    <link rel="stylesheet" href="assets/styles.css" />
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AZR-ggwgucAHd_HpNmSXJIG4wRjQq85wPG-fRVRJhqfTDNRPCBNyIDN0GKMnna5bNa9I80l7ecOi7uD3&currency=USD&intent=capture&enable-funding=card"></script>
+</head>
+
+<body>
+    <!-- Decor (parallax shapes) -->
+    <div class="decor decor-1"></div>
+    <div class="decor decor-2"></div>
+    <div class="decor decor-3"></div>
+
+    <!-- Header -->
+    <header class="site-header">
+        <div class="container">
+            <h1 class="brand">ObraTitan</h1>
+            <nav class="nav">
+                <a href="#caracteristicas">Características</a>
+                <a href="#demo">Demostración</a>
+                <a href="#planes">Planes</a>
+                <a href="#testimonios">Opiniones</a>
+                <a href="#team">Equipo</a>
+                <a href="#cta" class="btn btn-sm">Comprar</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- HERO -->
+        <section class="hero container section reveal">
+            <div class="hero-grid">
+                <div class="hero-copy">
+                    <div class="badges">
+                        <span class="chip">PWA</span>
+                        <span class="chip">Multi-tenant</span>
+                        <span class="chip">Firebase-secured</span>
+                    </div>
+                    <h2>Control total de tu obra, <span class="under">sin planillas eternas</span></h2>
+                    <p class="lead">Gestion de proyectos,Presupuesto, caja a proveedores, tareas, documentos y dashboard
+                        en un mismo lugar. Decide con datos, no con suposiciones.</p>
+                    <div class="hero-cta">
+                        <a href="#planes" class="btn">Ver planes</a>
+                        <a href="#caracteristicas" class="btn-outline">Características</a>
+                    </div>
+
+                    <!-- Métricas animadas -->
+                    <div class="kpis">
+                        <div class="kpi">
+                            <span class="kpi-num counter" data-to="35">0</span><span class="kpi-suf">%</span>
+                            <span class="kpi-lab">menos tiempo en reportes</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-num counter" data-to="3">0</span>
+                            <span class="kpi-lab">clics para ver el KPI de caja</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-num counter" data-to="24">0</span><span class="kpi-suf">/7</span>
+                            <span class="kpi-lab">disponible en la nube</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MINI CALCULADORA (teaser) -->
+                <section id="calc-teaser" class="card calc-lite tilt">
+                    <header class="calc-lite__head">
+                        <div class="dots"><span></span><span></span><span></span></div>
+                        <h3>Calculadora de Presupuesto (demo)</h3>
+                        <span class="tag">Vista previa</span>
+                    </header>
+
+                    <!-- Controles simples: solo botón añadir -->
+                    <div class="calc-lite__controls">
+                        <div class="ctrl grow">
+                            <button id="cl-add" class="btn btn-outline" type="button">Agregar línea</button>
+                        </div>
+                    </div>
+
+                    <div class="calc-lite__tablewrap">
+                        <table class="calc-lite__table">
+                            <thead>
+                                <tr>
+                                    <th style="width:120px">Estructura</th>
+                                    <th style="width:26%">Material / Preset</th>
+                                    <th>Descripción</th>
+                                    <th style="width:90px">Cant.</th>
+                                    <th style="width:90px">Unidad</th>
+                                    <th style="width:130px">Precio unit.</th>
+                                    <th style="width:130px">Subtotal</th>
+                                    <th style="width:50px"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="cl-rows"></tbody>
+                        </table>
+                        <p class="calc-lite__limit text-muted" id="cl-limit" hidden>Máximo 3 líneas en la demo.</p>
+                    </div>
+
+                    <div class="calc-lite__totals">
+                        <div class="row"><span>Total</span><strong id="cl-total">$0</strong></div>
+                    </div>
+
+                    <div class="calc-lite__cta">
+                        <a href="#planes" class="btn">Consigue la calculadora completa</a>
+                        <span class="text-muted">En la app podrás usar y tener la calculadora en su maxima capacidad,
+                            esta es una DEMO.</span>
+                    </div>
+                </section>
+
+            </div>
+        </section>
+
+        <!-- BENEFICIOS CLAVE -->
+        <section id="caracteristicas" class="container section reveal">
+            <h3>Lo que cubre ObraTitan</h3>
+            <div class="grid two">
+                <article class="benefit card tilt">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+                            <path fill="currentColor"
+                                d="M3 21h18v-2H3v2Zm16-8h-4V9h-2V7h6V5H9V3H7v2H3v2h10v2h-2v4H5v2h4v2h2v-2h4v-2Z" />
+                        </svg>
+                    </div>
+                    <h4>Gestión de proyectos</h4>
+                    <p class="text-muted">Gestiona tus proyectos de principio a fin: planifica, organiza y controla cada
+                        etapa, ya sea una construcción, remodelación o cualquier tipo de obra.
+                    </p>
+                </article>
+
+                <article class="benefit card tilt">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28">
+                            <path fill="currentColor"
+                                d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 4v4h10V6H7Zm0 6v6h10v-6H7Z" />
+                        </svg>
+                    </div>
+                    <h4>Presupuesto con calculadora</h4>
+                    <p class="text-muted">Calcula el costo total de tu obra en segundos: estima materiales, mano de obra
+                        y gastos generales para obtener un presupuesto claro y preciso..</p>
+                </article>
+
+                <article class="benefit card tilt">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28">
+                            <path fill="currentColor"
+                                d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3H2V7Zm0 5h20v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5Zm6 3a2 2 0 1 0 0 4h8a2 2 0 1 0 0-4H8Z" />
+                        </svg>
+                    </div>
+                    <h4>Caja de pagos a proveedores</h4>
+                    <p class="text-muted">Registra egresos, anticipos y conciliaciones. KPI de caja en 3 clics.</p>
+                </article>
+
+                <article class="benefit card tilt">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28">
+                            <path fill="currentColor"
+                                d="M9 11H7v2h2v-2Zm8 0h-6v2h6v-2ZM9 7H7v2h2V7Zm8 0h-6v2h6V7ZM9 15H7v2h2v-2Zm8 0h-6v2h6v-2Z" />
+                        </svg>
+                    </div>
+                    <h4>Listado de tareas</h4>
+                    <p class="text-muted">Checklist por frente de obra, asignación, fechas y estados con filtros.</p>
+                </article>
+
+                <article class="benefit card tilt">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28">
+                            <path fill="currentColor"
+                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12V8l-4-6Zm0 1.5L18.5 8H14V3.5ZM8 12h8v2H8v-2Zm0 4h8v2H8v-2Zm0-8h4v2H8V8Z" />
+                        </svg>
+                    </div>
+                    <h4>Gestión de documentos</h4>
+                    <p class="text-muted">Planos, contratos y actas con control de versiones y permisos.</p>
+                </article>
+
+                <article class="benefit card tilt">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28">
+                            <path fill="currentColor" d="M3 3h8v8H3V3Zm10 0h8v5h-8V3Zm0 7h8v11h-8V10ZM3 13h8v8H3v-8Z" />
+                        </svg>
+                    </div>
+                    <h4>Dashboard & reportes</h4>
+                    <p class="text-muted">Indicadores clave, exportables y comparativas por proyecto.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- DEMO -->
+        <section id="demo" class="container section reveal">
+            <div class="demo-card card tilt">
+                <div class="media-skeleton shimmer">
+                    <video controls autoplay muted loop class="demo-video">
+                        <source src="assets/video/VideoDemo.mp4" type="video/mp4" />
+                        Tu navegador no soporta la reproducción de video.
+                    </video>
+                </div>
+
+                <div class="demo-copy">
+                    <h3>Ve lo importante primero</h3>
+                    <p class="text-muted">Un panel que prioriza presupuesto vs. ejecutado, caja disponible y alertas de
+                        desvío.</p>
+                   
+                </div>
+            </div>
+        </section>
+
+        <!-- PLANES -->
+        <section id="planes" class="plans container section reveal">
+            <h3>Elige tu plan</h3>
+            <div class="grid">
+                <article class="card tilt">
+                    <h4>Basic</h4>
+                    <p class="price">$10 / mes</p>
+                    <ul class="features">
+                        <li>Dashboard esencial</li>
+                        <li>1 tenant (dueño)</li>
+                        <li>Hasta 3 usuarios adicionales</li>
+                    </ul>
+                    <div class="btn-wrap">
+                        <button class="btn btn-outline" data-plan="basic" data-amount="10.00" data-invites="3">Comprar
+                            Basic</button>
+                    </div>
+                    <div id="paypal-basic" class="paypal-container"></div>
+                </article>
+
+                <article class="card highlight tilt">
+                    <div class="badge">Popular</div>
+                    <h4>Pro</h4>
+                    <p class="price">$30 / mes</p>
+                    <ul class="features">
+                        <li>Todo lo de Basic</li>
+                        <li>Reportes avanzados</li>
+                        <li>Soporte prioritario</li>
+                    </ul>
+                    <div class="btn-wrap">
+                        <button class="btn" data-plan="pro" data-amount="30.00" data-invites="3">Comprar Pro</button>
+                    </div>
+                    <div id="paypal-pro" class="paypal-container"></div>
+                </article>
+
+                <article class="card tilt">
+                    <h4>Enterprise</h4>
+                    <p class="price">$99 / mes</p>
+                    <ul class="features">
+                        <li>Integraciones personalizadas</li>
+                        <li>Seguridad avanzada</li>
+                        <li>Hasta 10 usuarios</li>
+                    </ul>
+                    <div class="btn-wrap">
+                        <button class="btn btn-outline" data-plan="enterprise" data-amount="99.00"
+                            data-invites="10">Comprar Enterprise</button>
+                    </div>
+                    <div id="paypal-enterprise" class="paypal-container"></div>
+                </article>
+            </div>
+            <p class="note">Tras el pago, recibirás un correo con el enlace de <strong>activación y registro</strong>.
+            </p>
+        </section>
+
+        <!-- TESTIMONIOS -->
+        <section id="testimonios" class="container section reveal">
+            <h3>Lo que dicen nuestros usuarios</h3>
+            <div class="testimonials" id="tst-list">
+                <article class="testimonial active">
+                    <p>“El dashboard nos ahorra horas cada semana.”</p>
+                    <div class="who">
+                        <div class="avatar">AG</div>
+                        <div><strong>Arq. González</strong><br><span class="text-muted">Constructora del Sur</span>
+                        </div>
+                    </div>
+                </article>
+                <article class="testimonial">
+                    <p>“KPI de caja y control de gastos = decisiones a tiempo.”</p>
+                    <div class="who">
+                        <div class="avatar">JR</div>
+                        <div><strong>Ing. Romero</strong><br><span class="text-muted">Proyectos JR</span></div>
+                    </div>
+                </article>
+                <article class="testimonial">
+                    <p>“Onboarding en minutos. Adiós reportes por WhatsApp.”</p>
+                    <div class="who">
+                        <div class="avatar">LM</div>
+                        <div><strong>Lucía Méndez</strong><br><span class="text-muted">Obras LM</span></div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- EQUIPO -->
+        <section id="team" class="container section reveal">
+            <h3>Huntrix — el equipo detrás</h3>
+            <p class="text-muted" style="max-width:720px">
+                Somos 5: 2 desarrolladores, 1 comunicador, 1 marketing y 1 audiovisual
+                (una desarrolladora también es audiovisual). Entregamos producto, no promesas.
+            </p>
+            <div class="grid team">
+                <article class="member card tilt">
+                    <div class="avatar lg">DV</div>
+                    <h4>Daniela Lumbi</h4>
+                    <p class="role">Desarrolladora & Diseñadora</p>
+                    <p class="text-muted">Frontend, Backend, UX y piezas visuales que comunican valor.</p>
+                </article>
+                <article class="member card tilt">
+                    <div class="avatar lg">DE</div>
+                    <h4>Yamil Garcia</h4>
+                    <p class="role">Desarrollador</p>
+                    <p class="text-muted">Arquitectura, multitenant seguro y rendimiento eficaz.</p>
+                </article>
+                <article class="member card tilt">
+                    <div class="avatar lg">CO</div>
+                    <h4>Waskar Rios</h4>
+                    <p class="role">Comunicador</p>
+                    <p class="text-muted">Onboarding claro y mensajes que venden sin humo.</p>
+                </article>
+                <article class="member card tilt">
+                    <div class="avatar lg">MK</div>
+                    <h4>Roxana Mendoza</h4>
+                    <p class="role">Marketing</p>
+                    <p class="text-muted">Campañas orientadas a conversión.</p>
+                </article>
+                <article class="member card tilt">
+                    <div class="avatar lg">AV</div>
+                    <h4>Bryan Montenegro</h4>
+                    <p class="role">Audiovisual</p>
+                    <p class="text-muted">Demos que explican y enamoran.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section id="cta" class="container section cta reveal">
+            <div class="cta-card">
+                <h3>¿Listo para dominar tus obras?</h3>
+                <p class="text-muted">Compra tu licencia y recibe tu enlace de activación. En minutos estarás viendo
+                    KPIs reales.</p>
+                <div class="cta-actions">
+                    <a href="#planes" class="btn">Comprar ahora</a>
+                    <a href="#demo" class="btn-outline">Ver demo</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer + CTA flotante -->
+    <footer class="site-footer">
+        <div class="container">
+            <small>© <span id="year"></span> ObraTitan by Huntrix. Todos los derechos reservados.</small>
+        </div>
+    </footer>
+    <a href="#planes" class="floating-cta btn">Comprar licencia</a>
+
+    <script>
+        window.OBT_CONFIG = {
+            CREATE_ORDER_URL: '/create-order',
+            SUCCESS_URL: window.location.origin + '/gracias.html',
+            CANCEL_URL: window.location.origin + '/cancelar.html'
+        };
+    </script>
+    <script src="assets/app.js"></script>
+</body>
+
+</html>

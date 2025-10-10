@@ -1,0 +1,8 @@
+[functions]
+  node_bundler = "esbuild"
+
+# Redirige tu ruta pública a la función serverless
+[[redirects]]
+  from = "/create-order"
+  to = "/.netlify/functions/create-order"
+  status = 200
