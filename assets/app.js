@@ -10,7 +10,12 @@ document.querySelectorAll('.nav a[href^="#"], a.btn[href^="#"]').forEach(a => {
   });
 });
 
-const cfg = window.OBT_CONFIG || { CREATE_ORDER_URL: '/create-order', SUCCESS_URL: '/gracias.html', CANCEL_URL: '/cancelar.html' };
+// ⚙️ Config
+const cfg = window.OBT_CONFIG || {
+  CREATE_ORDER_URL: '/create-order',
+  SUCCESS_URL: window.location.origin + '/gracias.html',
+  CANCEL_URL: window.location.origin + '/cancelar.html'
+};
 
 // ===== Firebase init (compat)
 (function initFirebase() {
@@ -24,7 +29,7 @@ const cfg = window.OBT_CONFIG || { CREATE_ORDER_URL: '/create-order', SUCCESS_UR
 // Helpers DOM
 const $ = (sel, root = document) => root.querySelector(sel);
 
-// Modal helpers
+// ===== Modal helpers
 function openPostPayModal({ plan, invites, amount, orderID }) {
   $('#pp-plan-pill').textContent = plan.toUpperCase();
   $('#pp-plan').value = plan;
@@ -37,7 +42,6 @@ function openPostPayModal({ plan, invites, amount, orderID }) {
 }
 $('#pp-close')?.addEventListener('click', () => $('#postpay-modal').classList.remove('show'));
 
-
 // ===== PayPal
 function renderPayPalButton({ containerId, amount, licenseType, maxInvites }) {
   if (!window.paypal) { alert('SDK de PayPal no cargó. Revisa tu client-id en index.html'); return; }
@@ -47,11 +51,17 @@ function renderPayPalButton({ containerId, amount, licenseType, maxInvites }) {
     style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay' },
     createOrder: () => fetch(cfg.CREATE_ORDER_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: { licenseType, maxInvites, amount }, successUrl: cfg.SUCCESS_URL, cancelUrl: cfg.CANCEL_URL })
-    }).then(r => r.json()).then(d => { if (!d.orderID) throw new Error(d.error || 'No se pudo crear la orden'); return d.orderID; }),
+      body: JSON.stringify({
+        plan: { licenseType, maxInvites, amount },
+        successUrl: cfg.SUCCESS_URL,
+        cancelUrl: cfg.CANCEL_URL
+      })
+    })
+    .then(r => r.json())
+    .then(d => { if (!d.orderID) throw new Error(d.error || 'No se pudo crear la orden'); return d.orderID; }),
+
     onApprove: async (data, actions) => {
-      const details = await actions.order.capture(); // captura en PayPal
-      // Abre el modal con el plan actual (licenseType), invitados, monto y orderID
+      await actions.order.capture(); // captura en PayPal
       openPostPayModal({
         plan: licenseType,
         invites: maxInvites,
@@ -76,12 +86,11 @@ document.querySelectorAll('button[data-plan]').forEach(btn => {
   });
 });
 
-// ===== Testimonios: hover instantáneo + pausa de rotación
+// ===== Testimonios (rotación con pausa por hover)
 (function testimonials() {
   const items = Array.from(document.querySelectorAll('.testimonial'));
   if (items.length <= 1) return;
   let idx = 0, timer = null, paused = false;
-
   function setActive(i) {
     items.forEach(el => el.classList.remove('active'));
     items[i].classList.add('active');
@@ -102,7 +111,7 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: .15 });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-// ===== Parallax decor (ligero)
+// ===== Parallax decor
 const decors = document.querySelectorAll('.decor');
 window.addEventListener('mousemove', (e) => {
   const { innerWidth: w, innerHeight: h } = window;
@@ -114,7 +123,7 @@ window.addEventListener('mousemove', (e) => {
   });
 });
 
-// ===== Mini calculadora (teaser) en HERO — sin contingencia/ utilidad
+// ===== Mini calculadora (teaser)
 const CL_STRUCTS = ['Muro', 'Losa', 'Cimentación', 'General']; // demo
 const CL_PRESETS = [
   { name: 'Cemento (bolsa)', unit: 'm²', price: 6 },
@@ -138,7 +147,6 @@ function structSelect() {
     ${CL_STRUCTS.map(s => `<option value="${s}">${s}</option>`).join('')}
   </select>`;
 }
-
 function presetSelect() {
   const opts = CL_PRESETS.map(p => {
     const val = JSON.stringify({ name: p.name, unit: p.unit, price: p.price }).replace(/"/g, '&quot;');
@@ -146,7 +154,6 @@ function presetSelect() {
   }).join('');
   return `<select class="cl-preset">${opts}</select>`;
 }
-
 function clRowTemplate(i) {
   return `
   <tr data-idx="${i}">
@@ -160,16 +167,14 @@ function clRowTemplate(i) {
     <td><button type="button" class="del">✕</button></td>
   </tr>`;
 }
-
 function clAddRow() {
-  const rows = cl.tbody.querySelectorAll('tr').length;
-  if (rows >= cl.maxRows) { cl.limitMsg.hidden = false; return; }
-  cl.limitMsg.hidden = true;
+  const rows = cl.tbody?.querySelectorAll('tr').length || 0;
+  if (!cl.tbody || rows >= cl.maxRows) { if (cl.limitMsg) cl.limitMsg.hidden = false; return; }
+  if (cl.limitMsg) cl.limitMsg.hidden = true;
   cl.tbody.insertAdjacentHTML('beforeend', clRowTemplate(rows));
   clBindRow(cl.tbody.lastElementChild);
   clRecalc();
 }
-
 function clBindRow(tr) {
   const preset = tr.querySelector('.cl-preset');
   const unit = tr.querySelector('.cl-unit');
@@ -178,34 +183,32 @@ function clBindRow(tr) {
   const delBtn = tr.querySelector('.del');
 
   preset.addEventListener('change', () => {
-    try { const obj = JSON.parse(preset.value); unit.value = obj.unit; price.value = obj.price; } catch (e) { }
+    try { const obj = JSON.parse(preset.value); unit.value = obj.unit; price.value = obj.price; } catch (e) {}
     clRecalc();
   });
   [price, qty, unit].forEach(el => el.addEventListener('input', clRecalc));
-  delBtn.addEventListener('click', () => { tr.remove(); cl.limitMsg.hidden = true; clRecalc(); });
+  delBtn.addEventListener('click', () => { tr.remove(); if (cl.limitMsg) cl.limitMsg.hidden = true; clRecalc(); });
 }
-
 function clRecalc() {
   let total = 0;
-  cl.tbody.querySelectorAll('tr').forEach(tr => {
+  cl.tbody?.querySelectorAll('tr').forEach(tr => {
     const q = parseFloat(tr.querySelector('.cl-qty').value || '0');
     const p = parseFloat(tr.querySelector('.cl-price').value || '0');
     const s = (q * p) || 0;
     tr.querySelector('.cl-sub').textContent = clFmt(s);
     total += s;
   });
-  cl.total.textContent = clFmt(total);
-  cl.total.classList.add('pop'); setTimeout(() => cl.total.classList.remove('pop'), 260);
+  if (cl.total) {
+    cl.total.textContent = clFmt(total);
+    cl.total.classList.add('pop'); setTimeout(() => cl.total.classList.remove('pop'), 260);
+  }
 }
-
 if (cl.addBtn && cl.tbody) {
   cl.addBtn.addEventListener('click', clAddRow);
-  // arranca con 1 línea
-  clAddRow();
+  clAddRow(); // arranca con 1 línea
 }
 
-
-// ===== KPIs counters
+// ===== KPI counters
 function animateCounter(el) {
   const to = parseInt(el.getAttribute('data-to'), 10) || 0;
   const dur = 900; const start = performance.now();
@@ -216,14 +219,10 @@ new IntersectionObserver((ents, obs) => {
   ents.forEach(e => { if (e.isIntersecting) { e.target.querySelectorAll('.counter').forEach(animateCounter); obs.unobserve(e.target); } });
 }, { threshold: .4 }).observe(document.querySelector('.kpis'));
 
+// Ajuste FAB
+(function () { if (document.querySelector('.floating-cta')) { document.body.classList.add('with-fab'); } })();
 
-(function () {
-  if (document.querySelector('.floating-cta')) {
-    document.body.classList.add('with-fab');
-  }
-})();
-
-// ===== Registro post-pago
+// ===== Registro post-pago (SUBMIT)
 $('#pp-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -244,7 +243,6 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
     btn.disabled = false; return;
   }
 
-  // 👇 AGREGA ESTA LÍNEA AQUÍ
   const APP_OWNER_ROL = 'administrador';
 
   try {
@@ -252,7 +250,7 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
     const cred = await $auth.createUserWithEmailAndPassword(email, pass1);
     await cred.user.updateProfile({ displayName: name });
 
-    // 2) Crear tenant + membresía (owner=administrador)
+    // 2) Crear tenant + membresía
     const db = $db;
     const now = firebase.firestore.FieldValue.serverTimestamp();
     const tenantRef = db.collection('tenants').doc();
@@ -295,11 +293,20 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
 
     await batch.commit();
 
+    // 3) Persistencia local y redirección
     localStorage.setItem('OBT_TENANT', tenantId);
     localStorage.setItem('OBT_ROLE', APP_OWNER_ROL);
 
+    // Cierra modal
     $('#postpay-modal').classList.remove('show');
-    alert('¡Cuenta creada y licencia activada!');
+
+    // ✅ Redirige a /gracias.html con QS
+    const qs = new URLSearchParams({ plan, email, tenantId }).toString();
+    const url = `${cfg.SUCCESS_URL}?${qs}`;
+    window.location.assign(url);                  // principal
+    setTimeout(() => location.replace(url), 300); // fallback
+    return; // corta ejecución
+
   } catch (e2) {
     console.error(e2);
     err.textContent = (e2?.message || 'Error al crear la cuenta');
@@ -308,3 +315,4 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
   }
 });
 
+console.log('build gracias4');
