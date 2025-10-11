@@ -11,6 +11,8 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AZR-ggwgucAHd_HpNmSXJIG4wRjQq85wPG-fRVRJhqfTDNRPCBNyIDN0GKMnna5bNa9I80l7ecOi7uD3&currency=USD&intent=capture&enable-funding=card"></script>
 </head>
 
+
+
 <body>
     <!-- Decor (parallax shapes) -->
     <div class="decor decor-1"></div>
@@ -214,7 +216,7 @@
             <div class="grid">
                 <article class="card tilt">
                     <h4>Basic</h4>
-                    <p class="price">$10 / mes</p>
+                    <p class="price">$30 / mes</p>
                     <ul class="features">
                         <li>Dashboard esencial</li>
                         <li>1 tenant (dueño)</li>
@@ -230,7 +232,7 @@
                 <article class="card highlight tilt">
                     <div class="badge">Popular</div>
                     <h4>Pro</h4>
-                    <p class="price">$30 / mes</p>
+                    <p class="price">$80 / mes</p>
                     <ul class="features">
                         <li>Todo lo de Basic</li>
                         <li>Reportes avanzados</li>
@@ -242,20 +244,7 @@
                     <div id="paypal-pro" class="paypal-container"></div>
                 </article>
 
-                <article class="card tilt">
-                    <h4>Enterprise</h4>
-                    <p class="price">$99 / mes</p>
-                    <ul class="features">
-                        <li>Integraciones personalizadas</li>
-                        <li>Seguridad avanzada</li>
-                        <li>Hasta 10 usuarios</li>
-                    </ul>
-                    <div class="btn-wrap">
-                        <button class="btn btn-outline" data-plan="enterprise" data-amount="99.00"
-                            data-invites="10">Comprar Enterprise</button>
-                    </div>
-                    <div id="paypal-enterprise" class="paypal-container"></div>
-                </article>
+                
             </div>
             <p class="note">Tras el pago, recibirás un correo con el enlace de <strong>activación y registro</strong>.
             </p>
@@ -360,7 +349,74 @@
             CANCEL_URL: window.location.origin + '/cancelar.html'
         };
     </script>
-    <script src="assets/app.js"></script>
+
+
+<!-- Firebase (compat para usarlo fácil en <script>) -->
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // ⚙️ Rellena con TU config de Firebase (del panel)
+  window.OBT_CONFIG.firebaseConfig = {
+    apiKey:            "AIzaSyDbiMjzg2LkxP072A6YH-gxu90Ljv-slKY",
+    authDomain:        "obratitan-d3da9.firebaseapp.com",
+    projectId:         "obratitan-d3da9",
+    storageBucket:     "obratitan-d3da9.firebasestorage.app",
+    messagingSenderId: "893767644955",
+    appId:             "1:893767644955:web:d2611705f8f092a10505be"
+  };
+</script>
+
+
+
+
+<!-- Modal post-pago -->
+<div id="postpay-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pp-title">
+    <header class="modal-head">
+      <h3 id="pp-title">¡Pago completado! Crea tu cuenta</h3>
+      <button type="button" class="close" id="pp-close">Cerrar</button>
+    </header>
+
+    <p class="text-muted" id="pp-summary">
+      Activaremos tu licencia <span class="pill" id="pp-plan-pill">Plan</span>. Completa tu registro:
+    </p>
+
+    <form id="pp-form" autocomplete="on" novalidate>
+      <div class="form-grid">
+        <label>Nombre completo
+          <input type="text" id="pp-name" required placeholder="Ej. Ana Pérez" />
+        </label>
+
+        <label>Correo
+          <input type="email" id="pp-email" required placeholder="tucorreo@dominio.com" />
+        </label>
+
+        <label>Contraseña
+          <input type="password" id="pp-pass" required minlength="6" placeholder="Mínimo 6 caracteres" />
+        </label>
+
+        <label>Confirmar contraseña
+          <input type="password" id="pp-pass2" required minlength="6" placeholder="Repite la contraseña" />
+        </label>
+
+        <!-- Contexto oculto -->
+        <input type="hidden" id="pp-plan" />
+        <input type="hidden" id="pp-invites" />
+        <input type="hidden" id="pp-order" />
+        <input type="hidden" id="pp-amount" />
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn" id="pp-submit">Crear cuenta</button>
+        <span id="pp-error" class="text-danger" aria-live="polite"></span>
+      </div>
+    </form>
+  </div>
+</div>
+<script defer src="assets/app.js"></script>
+
 </body>
 
 </html>

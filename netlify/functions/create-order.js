@@ -3,9 +3,8 @@
 // Usa credenciales desde variables de entorno de Netlify.
 
 const PLANS = {
-  basic:      { amount: '10.00', desc: 'ObraTitan Basic (mensual)' },
-  pro:        { amount: '30.00', desc: 'ObraTitan Pro (mensual)' },
-  enterprise: { amount: '99.00', desc: 'ObraTitan Enterprise (mensual)' },
+  basic:      { amount: '30.00', desc: 'ObraTitan Basic (mensual)' },
+  pro:        { amount: '80.00', desc: 'ObraTitan Pro (mensual)' },
 };
 
 async function getAccessToken() {

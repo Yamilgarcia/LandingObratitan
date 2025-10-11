@@ -12,6 +12,32 @@ document.querySelectorAll('.nav a[href^="#"], a.btn[href^="#"]').forEach(a=>{
 
 const cfg = window.OBT_CONFIG || { CREATE_ORDER_URL:'/create-order', SUCCESS_URL:'/gracias.html', CANCEL_URL:'/cancelar.html' };
 
+// ===== Firebase init (compat)
+(function initFirebase(){
+  if (!window.firebase?.apps?.length) {
+    firebase.initializeApp(cfg.firebaseConfig);
+  }
+  window.$auth = firebase.auth();
+  window.$db   = firebase.firestore();
+})();
+
+// Helpers DOM
+const $  = (sel, root=document)=> root.querySelector(sel);
+
+// Modal helpers
+function openPostPayModal({ plan, invites, amount, orderID }) {
+  $('#pp-plan-pill').textContent = plan.toUpperCase();
+  $('#pp-plan').value = plan;
+  $('#pp-invites').value = invites;
+  $('#pp-amount').value = amount;
+  $('#pp-order').value = orderID;
+
+  $('#postpay-modal').classList.add('show');
+  $('#pp-name').focus();
+}
+$('#pp-close')?.addEventListener('click', () => $('#postpay-modal').classList.remove('show'));
+
+
 // ===== PayPal
 function renderPayPalButton({ containerId, amount, licenseType, maxInvites }) {
   if (!window.paypal) { alert('SDK de PayPal no cargó. Revisa tu client-id en index.html'); return; }
@@ -23,7 +49,17 @@ function renderPayPalButton({ containerId, amount, licenseType, maxInvites }) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan: { licenseType, maxInvites, amount }, successUrl: cfg.SUCCESS_URL, cancelUrl: cfg.CANCEL_URL })
     }).then(r=>r.json()).then(d=>{ if(!d.orderID) throw new Error(d.error||'No se pudo crear la orden'); return d.orderID; }),
-    onApprove: (data, actions) => actions.order.capture().then(()=>{ alert('Pago completado. Revisa tu correo para activar tu cuenta.'); window.location.href = cfg.SUCCESS_URL; }),
+   onApprove: async (data, actions) => {
+  const details = await actions.order.capture(); // captura en PayPal
+  // Abre el modal con el plan actual (licenseType), invitados, monto y orderID
+  openPostPayModal({
+    plan: licenseType,
+    invites: maxInvites,
+    amount,
+    orderID: data.orderID
+  });
+},
+
     onCancel: ()=> window.location.href = cfg.CANCEL_URL,
     onError:  (err)=>{ console.error('PayPal error', err); alert('Error con PayPal. Intenta de nuevo.'); }
   }).render('#' + containerId);
@@ -186,3 +222,81 @@ new IntersectionObserver((ents, obs)=>{
       document.body.classList.add('with-fab');
     }
   })();
+
+  // ===== Registro post-pago
+$('#pp-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = $('#pp-name').value.trim();
+  const email = $('#pp-email').value.trim();
+  const pass1 = $('#pp-pass').value;
+  const pass2 = $('#pp-pass2').value;
+  const plan = $('#pp-plan').value;
+  const invites = parseInt($('#pp-invites').value || '0', 10);
+  const amount = $('#pp-amount').value;
+  const orderID = $('#pp-order').value;
+
+  const err = $('#pp-error'); err.textContent = '';
+  const btn = $('#pp-submit'); btn.disabled = true;
+
+  if (!name || !email || pass1.length < 6 || pass1 !== pass2) {
+    err.textContent = 'Revisa nombre, correo y que las contraseñas coincidan (mín. 6).';
+    btn.disabled = false; return;
+  }
+
+  try {
+    // 1) Crear usuario
+    const cred = await $auth.createUserWithEmailAndPassword(email, pass1);
+    await cred.user.updateProfile({ displayName: name });
+
+    // 2) Crear tenant + membresía (owner=administrador)
+    const db = $db;
+    const now = firebase.firestore.FieldValue.serverTimestamp();
+    const tenantRef = db.collection('tenants').doc(); // o usa cred.user.uid si prefieres
+    const tenantId = tenantRef.id;
+
+    const batch = db.batch();
+
+    batch.set(tenantRef, {
+      meta: {
+        plan,
+        amountUSD: amount,
+        status: 'active',
+        maxUsers: (plan === 'basic' ? 4 : 10), // ajusta a tu oferta real
+        createdAt: now,
+        ownerUid: cred.user.uid,
+        orderId: orderID
+      }
+    });
+
+    const memberRef = tenantRef.collection('members').doc(cred.user.uid);
+    batch.set(memberRef, {
+      role: 'administrador',
+      invitedBy: null,
+      createdAt: now,
+      email,
+      name
+    });
+
+    // (Opcional) perfil simple
+    const userRef = db.collection('users').doc(cred.user.uid);
+    batch.set(userRef, {
+      name, email, tenantId, plan,
+      createdAt: now
+    }, { merge: true });
+
+    await batch.commit();
+
+    // 3) Guardar tenantId para la app
+    localStorage.setItem('OBT_TENANT', tenantId);
+
+    // 4) Cerrar modal y avisar/dirigir
+    $('#postpay-modal').classList.remove('show');
+    alert('¡Cuenta creada y licencia activada!');
+    // window.location.href = '/app'; // si ya tienes ruta de app
+  } catch (e2) {
+    console.error(e2);
+    err.textContent = (e2?.message || 'Error al crear la cuenta');
+  } finally {
+    btn.disabled = false;
+  }
+});
