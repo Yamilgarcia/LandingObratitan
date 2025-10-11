@@ -2,27 +2,27 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
 // ===== Scroll suave
-document.querySelectorAll('.nav a[href^="#"], a.btn[href^="#"]').forEach(a=>{
-  a.addEventListener('click', e=>{
-    const id = a.getAttribute('href'); if(!id || id==='#') return;
-    const el = document.querySelector(id); if(!el) return;
-    e.preventDefault(); el.scrollIntoView({ behavior:'smooth', block:'start' });
+document.querySelectorAll('.nav a[href^="#"], a.btn[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href'); if (!id || id === '#') return;
+    const el = document.querySelector(id); if (!el) return;
+    e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
 
-const cfg = window.OBT_CONFIG || { CREATE_ORDER_URL:'/create-order', SUCCESS_URL:'/gracias.html', CANCEL_URL:'/cancelar.html' };
+const cfg = window.OBT_CONFIG || { CREATE_ORDER_URL: '/create-order', SUCCESS_URL: '/gracias.html', CANCEL_URL: '/cancelar.html' };
 
 // ===== Firebase init (compat)
-(function initFirebase(){
+(function initFirebase() {
   if (!window.firebase?.apps?.length) {
     firebase.initializeApp(cfg.firebaseConfig);
   }
   window.$auth = firebase.auth();
-  window.$db   = firebase.firestore();
+  window.$db = firebase.firestore();
 })();
 
 // Helpers DOM
-const $  = (sel, root=document)=> root.querySelector(sel);
+const $ = (sel, root = document) => root.querySelector(sel);
 
 // Modal helpers
 function openPostPayModal({ plan, invites, amount, orderID }) {
@@ -48,106 +48,106 @@ function renderPayPalButton({ containerId, amount, licenseType, maxInvites }) {
     createOrder: () => fetch(cfg.CREATE_ORDER_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan: { licenseType, maxInvites, amount }, successUrl: cfg.SUCCESS_URL, cancelUrl: cfg.CANCEL_URL })
-    }).then(r=>r.json()).then(d=>{ if(!d.orderID) throw new Error(d.error||'No se pudo crear la orden'); return d.orderID; }),
-   onApprove: async (data, actions) => {
-  const details = await actions.order.capture(); // captura en PayPal
-  // Abre el modal con el plan actual (licenseType), invitados, monto y orderID
-  openPostPayModal({
-    plan: licenseType,
-    invites: maxInvites,
-    amount,
-    orderID: data.orderID
-  });
-},
+    }).then(r => r.json()).then(d => { if (!d.orderID) throw new Error(d.error || 'No se pudo crear la orden'); return d.orderID; }),
+    onApprove: async (data, actions) => {
+      const details = await actions.order.capture(); // captura en PayPal
+      // Abre el modal con el plan actual (licenseType), invitados, monto y orderID
+      openPostPayModal({
+        plan: licenseType,
+        invites: maxInvites,
+        amount,
+        orderID: data.orderID
+      });
+    },
 
-    onCancel: ()=> window.location.href = cfg.CANCEL_URL,
-    onError:  (err)=>{ console.error('PayPal error', err); alert('Error con PayPal. Intenta de nuevo.'); }
+    onCancel: () => window.location.href = cfg.CANCEL_URL,
+    onError: (err) => { console.error('PayPal error', err); alert('Error con PayPal. Intenta de nuevo.'); }
   }).render('#' + containerId);
 }
 
-document.querySelectorAll('button[data-plan]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
+document.querySelectorAll('button[data-plan]').forEach(btn => {
+  btn.addEventListener('click', () => {
     const plan = btn.getAttribute('data-plan');
     const amount = btn.getAttribute('data-amount');
-    const invites = parseInt(btn.getAttribute('data-invites'),10);
+    const invites = parseInt(btn.getAttribute('data-invites'), 10);
     const containerId = `paypal-${plan}`;
     renderPayPalButton({ containerId, amount, licenseType: plan, maxInvites: invites });
-    document.getElementById(containerId)?.scrollIntoView({ behavior:'smooth', block:'center' });
+    document.getElementById(containerId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 });
 
 // ===== Testimonios: hover instantáneo + pausa de rotación
-(function testimonials(){
+(function testimonials() {
   const items = Array.from(document.querySelectorAll('.testimonial'));
-  if(items.length<=1) return;
+  if (items.length <= 1) return;
   let idx = 0, timer = null, paused = false;
 
-  function setActive(i){
-    items.forEach(el=>el.classList.remove('active'));
+  function setActive(i) {
+    items.forEach(el => el.classList.remove('active'));
     items[i].classList.add('active');
   }
-  function play(){
-    timer = setInterval(()=>{ if(paused) return; idx = (idx+1)%items.length; setActive(idx); }, 3600);
+  function play() {
+    timer = setInterval(() => { if (paused) return; idx = (idx + 1) % items.length; setActive(idx); }, 3600);
   }
-  items.forEach((el,i)=>{
-    el.addEventListener('mouseenter', ()=>{ paused=true; setActive(i); });
-    el.addEventListener('mouseleave', ()=>{ paused=false; });
+  items.forEach((el, i) => {
+    el.addEventListener('mouseenter', () => { paused = true; setActive(i); });
+    el.addEventListener('mouseleave', () => { paused = false; });
   });
   setActive(0); play();
 })();
 
 // ===== Scroll reveal
-const io = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('is-visible'); io.unobserve(e.target); } });
-},{ threshold:.15 });
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
+}, { threshold: .15 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 // ===== Parallax decor (ligero)
 const decors = document.querySelectorAll('.decor');
-window.addEventListener('mousemove', (e)=>{
-  const { innerWidth:w, innerHeight:h } = window;
-  const x = (e.clientX - w/2) / (w/2);
-  const y = (e.clientY - h/2) / (h/2);
-  decors.forEach((d,i)=>{
-    const dx = (i+1) * 6 * x; const dy = (i+1) * 4 * y;
+window.addEventListener('mousemove', (e) => {
+  const { innerWidth: w, innerHeight: h } = window;
+  const x = (e.clientX - w / 2) / (w / 2);
+  const y = (e.clientY - h / 2) / (h / 2);
+  decors.forEach((d, i) => {
+    const dx = (i + 1) * 6 * x; const dy = (i + 1) * 4 * y;
     d.style.transform = `translate(${dx}px, ${dy}px)`;
   });
 });
 
 // ===== Mini calculadora (teaser) en HERO — sin contingencia/ utilidad
-const CL_STRUCTS = ['Muro','Losa','Cimentación','General']; // demo
+const CL_STRUCTS = ['Muro', 'Losa', 'Cimentación', 'General']; // demo
 const CL_PRESETS = [
-  { name:'Cemento (bolsa)', unit:'m²', price:6 },
-  { name:'Arena',           unit:'m³', price:18 },
-  { name:'Acero',           unit:'kg', price:1.1 },
-  { name:'Ladrillo',        unit:'m²', price:12 }
+  { name: 'Cemento (bolsa)', unit: 'm²', price: 6 },
+  { name: 'Arena', unit: 'm³', price: 18 },
+  { name: 'Acero', unit: 'kg', price: 1.1 },
+  { name: 'Ladrillo', unit: 'm²', price: 12 }
 ];
 
 const cl = {
-  maxRows:3,
-  tbody:document.getElementById('cl-rows'),
-  addBtn:document.getElementById('cl-add'),
-  limitMsg:document.getElementById('cl-limit'),
-  total:document.getElementById('cl-total'),
+  maxRows: 3,
+  tbody: document.getElementById('cl-rows'),
+  addBtn: document.getElementById('cl-add'),
+  limitMsg: document.getElementById('cl-limit'),
+  total: document.getElementById('cl-total'),
 };
 
-function clFmt(n){ return isFinite(n) ? n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}) : '$0'; }
+function clFmt(n) { return isFinite(n) ? n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }) : '$0'; }
 
-function structSelect(){
+function structSelect() {
   return `<select class="cl-struct">
-    ${CL_STRUCTS.map(s=>`<option value="${s}">${s}</option>`).join('')}
+    ${CL_STRUCTS.map(s => `<option value="${s}">${s}</option>`).join('')}
   </select>`;
 }
 
-function presetSelect(){
-  const opts = CL_PRESETS.map(p=>{
-    const val = JSON.stringify({name:p.name, unit:p.unit, price:p.price}).replace(/"/g,'&quot;');
+function presetSelect() {
+  const opts = CL_PRESETS.map(p => {
+    const val = JSON.stringify({ name: p.name, unit: p.unit, price: p.price }).replace(/"/g, '&quot;');
     return `<option value="${val}">${p.name} — ${clFmt(p.price)}/${p.unit}</option>`;
   }).join('');
   return `<select class="cl-preset">${opts}</select>`;
 }
 
-function clRowTemplate(i){
+function clRowTemplate(i) {
   return `
   <tr data-idx="${i}">
     <td>${structSelect()}</td>
@@ -161,44 +161,44 @@ function clRowTemplate(i){
   </tr>`;
 }
 
-function clAddRow(){
+function clAddRow() {
   const rows = cl.tbody.querySelectorAll('tr').length;
-  if(rows >= cl.maxRows){ cl.limitMsg.hidden = false; return; }
+  if (rows >= cl.maxRows) { cl.limitMsg.hidden = false; return; }
   cl.limitMsg.hidden = true;
   cl.tbody.insertAdjacentHTML('beforeend', clRowTemplate(rows));
   clBindRow(cl.tbody.lastElementChild);
   clRecalc();
 }
 
-function clBindRow(tr){
+function clBindRow(tr) {
   const preset = tr.querySelector('.cl-preset');
-  const unit   = tr.querySelector('.cl-unit');
-  const price  = tr.querySelector('.cl-price');
-  const qty    = tr.querySelector('.cl-qty');
+  const unit = tr.querySelector('.cl-unit');
+  const price = tr.querySelector('.cl-price');
+  const qty = tr.querySelector('.cl-qty');
   const delBtn = tr.querySelector('.del');
 
-  preset.addEventListener('change', ()=>{
-    try{ const obj = JSON.parse(preset.value); unit.value=obj.unit; price.value=obj.price; }catch(e){}
+  preset.addEventListener('change', () => {
+    try { const obj = JSON.parse(preset.value); unit.value = obj.unit; price.value = obj.price; } catch (e) { }
     clRecalc();
   });
-  [price, qty, unit].forEach(el=> el.addEventListener('input', clRecalc));
-  delBtn.addEventListener('click', ()=>{ tr.remove(); cl.limitMsg.hidden = true; clRecalc(); });
+  [price, qty, unit].forEach(el => el.addEventListener('input', clRecalc));
+  delBtn.addEventListener('click', () => { tr.remove(); cl.limitMsg.hidden = true; clRecalc(); });
 }
 
-function clRecalc(){
+function clRecalc() {
   let total = 0;
-  cl.tbody.querySelectorAll('tr').forEach(tr=>{
+  cl.tbody.querySelectorAll('tr').forEach(tr => {
     const q = parseFloat(tr.querySelector('.cl-qty').value || '0');
     const p = parseFloat(tr.querySelector('.cl-price').value || '0');
-    const s = (q*p)||0;
+    const s = (q * p) || 0;
     tr.querySelector('.cl-sub').textContent = clFmt(s);
     total += s;
   });
   cl.total.textContent = clFmt(total);
-  cl.total.classList.add('pop'); setTimeout(()=>cl.total.classList.remove('pop'), 260);
+  cl.total.classList.add('pop'); setTimeout(() => cl.total.classList.remove('pop'), 260);
 }
 
-if(cl.addBtn && cl.tbody){
+if (cl.addBtn && cl.tbody) {
   cl.addBtn.addEventListener('click', clAddRow);
   // arranca con 1 línea
   clAddRow();
@@ -206,26 +206,27 @@ if(cl.addBtn && cl.tbody){
 
 
 // ===== KPIs counters
-function animateCounter(el){
-  const to = parseInt(el.getAttribute('data-to'),10) || 0;
+function animateCounter(el) {
+  const to = parseInt(el.getAttribute('data-to'), 10) || 0;
   const dur = 900; const start = performance.now();
-  function step(t){ const p = Math.min(1,(t-start)/dur); el.textContent = Math.floor(p*to); if(p<1) requestAnimationFrame(step); }
+  function step(t) { const p = Math.min(1, (t - start) / dur); el.textContent = Math.floor(p * to); if (p < 1) requestAnimationFrame(step); }
   requestAnimationFrame(step);
 }
-new IntersectionObserver((ents, obs)=>{
-  ents.forEach(e=>{ if(e.isIntersecting){ e.target.querySelectorAll('.counter').forEach(animateCounter); obs.unobserve(e.target); } });
-},{ threshold:.4 }).observe(document.querySelector('.kpis'));
+new IntersectionObserver((ents, obs) => {
+  ents.forEach(e => { if (e.isIntersecting) { e.target.querySelectorAll('.counter').forEach(animateCounter); obs.unobserve(e.target); } });
+}, { threshold: .4 }).observe(document.querySelector('.kpis'));
 
 
- (function(){
-    if (document.querySelector('.floating-cta')) {
-      document.body.classList.add('with-fab');
-    }
-  })();
+(function () {
+  if (document.querySelector('.floating-cta')) {
+    document.body.classList.add('with-fab');
+  }
+})();
 
-  // ===== Registro post-pago
+// ===== Registro post-pago
 $('#pp-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const name = $('#pp-name').value.trim();
   const email = $('#pp-email').value.trim();
   const pass1 = $('#pp-pass').value;
@@ -243,6 +244,9 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
     btn.disabled = false; return;
   }
 
+  // 👇 AGREGA ESTA LÍNEA AQUÍ
+  const APP_OWNER_ROL = 'administrador';
+
   try {
     // 1) Crear usuario
     const cred = await $auth.createUserWithEmailAndPassword(email, pass1);
@@ -251,7 +255,7 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
     // 2) Crear tenant + membresía (owner=administrador)
     const db = $db;
     const now = firebase.firestore.FieldValue.serverTimestamp();
-    const tenantRef = db.collection('tenants').doc(); // o usa cred.user.uid si prefieres
+    const tenantRef = db.collection('tenants').doc();
     const tenantId = tenantRef.id;
 
     const batch = db.batch();
@@ -261,7 +265,7 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
         plan,
         amountUSD: amount,
         status: 'active',
-        maxUsers: (plan === 'basic' ? 4 : 10), // ajusta a tu oferta real
+        maxUsers: (plan === 'basic' ? 4 : 10),
         createdAt: now,
         ownerUid: cred.user.uid,
         orderId: orderID
@@ -270,29 +274,32 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
 
     const memberRef = tenantRef.collection('members').doc(cred.user.uid);
     batch.set(memberRef, {
-      role: 'administrador',
+      role: APP_OWNER_ROL,
+      rol: APP_OWNER_ROL,
       invitedBy: null,
       createdAt: now,
       email,
       name
     });
 
-    // (Opcional) perfil simple
     const userRef = db.collection('users').doc(cred.user.uid);
     batch.set(userRef, {
-      name, email, tenantId, plan,
+      name,
+      email,
+      tenantId,
+      plan,
+      rol: APP_OWNER_ROL,
+      memberships: { [tenantId]: APP_OWNER_ROL },
       createdAt: now
     }, { merge: true });
 
     await batch.commit();
 
-    // 3) Guardar tenantId para la app
     localStorage.setItem('OBT_TENANT', tenantId);
+    localStorage.setItem('OBT_ROLE', APP_OWNER_ROL);
 
-    // 4) Cerrar modal y avisar/dirigir
     $('#postpay-modal').classList.remove('show');
     alert('¡Cuenta creada y licencia activada!');
-    // window.location.href = '/app'; // si ya tienes ruta de app
   } catch (e2) {
     console.error(e2);
     err.textContent = (e2?.message || 'Error al crear la cuenta');
@@ -300,3 +307,4 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
     btn.disabled = false;
   }
 });
+
