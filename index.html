@@ -210,6 +210,80 @@
             </div>
         </section>
 
+
+
+<!-- ======================== -->
+<!-- RENOVAR LICENCIA (Landing) -->
+<!-- ======================== -->
+<section id="renovar" class="container section reveal">
+  <h3>¿Ya eres cliente? Renueva tu licencia</h3>
+  <p class="text-muted" style="max-width:720px">
+    Inicia sesión con el correo de tu cuenta (owner) para ver tu plan, fecha de vencimiento y renovar por 30 días más.
+  </p>
+
+  <div id="renew-box" class="card">
+    <div id="renew-logged-out">
+      <p>Para continuar, inicia sesión.</p>
+      <button class="btn" id="btn-open-login">Iniciar sesión</button>
+    </div>
+
+    <div id="renew-loading" hidden>
+      <p>Cargando datos de tu licencia…</p>
+    </div>
+
+    <div id="renew-logged-in" hidden>
+      <div class="grid two" style="align-items:start">
+        <div>
+          <p><b>Correo:</b> <span id="renew-email"></span></p>
+          <p><b>Tenant:</b> <span id="renew-tenant"></span></p>
+          <p><b>Plan:</b> <span id="renew-plan"></span></p>
+          <p><b>Estado:</b> <span id="renew-status"></span></p>
+          <p><b>Vence:</b> <span id="renew-end"></span></p>
+          <p><b>Precio mensual:</b> <span id="renew-amount"></span></p>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px">
+            <button class="btn" id="btn-render-renew">Renovar ahora</button>
+            <button class="btn-outline" id="btn-cancel-later">Cancelar al finalizar</button>
+            <button class="btn-outline" id="btn-cancel-now">Cancelar ahora</button>
+            <button class="btn-outline" id="btn-logout">Cerrar sesión</button>
+          </div>
+        </div>
+
+        <div>
+          <div id="paypal-renew" class="paypal-container"></div>
+        </div>
+      </div>
+      <p class="text-danger" id="renew-error" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Login simple (solo landing) -->
+<div id="login-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <header class="modal-head">
+      <h3 id="login-title">Iniciar sesión</h3>
+      <button type="button" class="close" id="login-close">Cerrar</button>
+    </header>
+    <form id="login-form" novalidate>
+      <div class="form-grid">
+        <label>Correo
+          <input type="email" id="login-email" required placeholder="tucorreo@dominio.com" />
+        </label>
+        <label>Contraseña
+          <input type="password" id="login-pass" required minlength="6" placeholder="Tu contraseña" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn" id="login-submit">Entrar</button>
+        <span id="login-error" class="text-danger" aria-live="polite"></span>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
         <!-- PLANES -->
         <section id="planes" class="plans container section reveal">
             <h3>Elige tu plan</h3>

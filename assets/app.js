@@ -57,8 +57,8 @@ function renderPayPalButton({ containerId, amount, licenseType, maxInvites }) {
         cancelUrl: cfg.CANCEL_URL
       })
     })
-    .then(r => r.json())
-    .then(d => { if (!d.orderID) throw new Error(d.error || 'No se pudo crear la orden'); return d.orderID; }),
+      .then(r => r.json())
+      .then(d => { if (!d.orderID) throw new Error(d.error || 'No se pudo crear la orden'); return d.orderID; }),
 
     onApprove: async (data, actions) => {
       await actions.order.capture(); // captura en PayPal
@@ -183,7 +183,7 @@ function clBindRow(tr) {
   const delBtn = tr.querySelector('.del');
 
   preset.addEventListener('change', () => {
-    try { const obj = JSON.parse(preset.value); unit.value = obj.unit; price.value = obj.price; } catch (e) {}
+    try { const obj = JSON.parse(preset.value); unit.value = obj.unit; price.value = obj.price; } catch (e) { }
     clRecalc();
   });
   [price, qty, unit].forEach(el => el.addEventListener('input', clRecalc));
@@ -257,6 +257,20 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
     const tenantId = tenantRef.id;
 
     const batch = db.batch();
+    // === Periodo inicial (30 días + 3 de gracia)
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const MS_30D = 30 * ONE_DAY;
+    const MS_GRACE = 3 * ONE_DAY;
+
+    const startMs = Date.now();
+    const endMs = startMs + MS_30D;
+    const graceMs = endMs + MS_GRACE;
+
+    const periodStartTs = firebase.firestore.Timestamp.fromDate(new Date(startMs));
+    const periodEndTs = firebase.firestore.Timestamp.fromDate(new Date(endMs));
+    const periodEndGraceTs = firebase.firestore.Timestamp.fromDate(new Date(graceMs));
+
+
 
     batch.set(tenantRef, {
       meta: {
@@ -266,7 +280,17 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
         maxUsers: (plan === 'basic' ? 4 : 10),
         createdAt: now,
         ownerUid: cred.user.uid,
-        orderId: orderID
+        orderId: orderID,
+        periodStart: periodStartTs,
+        periodEnd: periodEndTs,
+        periodEndGrace: periodEndGraceTs,   // ← FALTA GUARDARLA
+        cancelAtPeriodEnd: false,           // ← INIIALÍZALO EN FALSE
+        renewalsCount: 0,
+        lastPayment: {
+          orderId: orderID,
+          amountUSD: Number(amount),
+          paidAt: now
+        }
       }
     });
 
@@ -316,3 +340,270 @@ $('#pp-form')?.addEventListener('submit', async (e) => {
 });
 
 console.log('build gracias4');
+
+
+
+// ===============
+// Helpers landing
+// ===============
+const $$ = (sel, root = document) => root.querySelector(sel);
+
+function fmtDate(ts) {
+  try {
+    if (!ts) return '-';
+    const d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString();
+  } catch { return '-'; }
+}
+
+// Lee tenantId del user y la metadata del tenant
+async function loadTenantMetaForCurrentUser() {
+  const uid = $auth.currentUser?.uid;
+  if (!uid) throw new Error('No autenticado');
+  const u = await $db.collection('users').doc(uid).get();
+  if (!u.exists) throw new Error('No se encontró el usuario');
+  const tenantId = u.data()?.tenantId;
+  if (!tenantId) throw new Error('No tienes tenant asignado');
+
+  const tRef = $db.collection('tenants').doc(tenantId);
+  const t = await tRef.get();
+  if (!t.exists) throw new Error('Tenant no encontrado');
+
+  const meta = t.data()?.meta || {};
+  // Validar que el user sea el owner (solo owner puede renovar/cancelar)
+  if (meta.ownerUid !== uid) throw new Error('Solo el owner puede gestionar la licencia');
+
+  return { tenantId, meta, tRef };
+}
+
+// Render del bloque de datos en UI
+function showRenewData({ tenantId, meta, email }) {
+  $$('#renew-email').textContent = email || ($auth.currentUser?.email || '-');
+  $$('#renew-tenant').textContent = tenantId;
+  $$('#renew-plan').textContent = meta.plan || '-';
+  $$('#renew-status').textContent = meta.status || '-';
+  $$('#renew-end').textContent = fmtDate(meta.periodEnd);
+  $$('#renew-amount').textContent = meta.amountUSD ? `$${Number(meta.amountUSD).toFixed(2)} / mes` : '-';
+  $$('#renew-error').textContent = '';
+}
+
+// ===============
+// PayPal: Renovar
+// ===============
+function renderRenewPayPalButton({ amount, licenseType }) {
+  const containerId = 'paypal-renew';
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+
+  if (!window.paypal) {
+    alert('SDK de PayPal no cargó. Revisa tu client-id en el <script> de la landing.');
+    return;
+  }
+
+  paypal.Buttons({
+    style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay' },
+    createOrder: () => fetch(cfg.CREATE_ORDER_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plan: { licenseType, maxInvites: 3, amount }, // maxInvites no afecta la renovación, pero mantenemos el formato
+        successUrl: cfg.SUCCESS_URL,
+        cancelUrl: cfg.CANCEL_URL,
+        mode: 'renew'
+      })
+    }).then(r => r.json()).then(d => {
+      if (!d.orderID) throw new Error(d.error || 'No se pudo crear la orden');
+      return d.orderID;
+    }),
+
+    onApprove: async (data, actions) => {
+      await actions.order.capture();
+      try {
+        await applyRenewal({ orderID: data.orderID, amount, licenseType });
+        alert('¡Renovación aplicada correctamente!');
+        // recarga datos en UI
+        await landingRefreshRenewState();
+      } catch (e) {
+        console.error(e);
+        alert('Ocurrió un error al aplicar la renovación.');
+      }
+    },
+
+    onCancel: () => { /* opcional redirigir */ },
+    onError: (err) => { console.error('PayPal error', err); alert('Error con PayPal. Intenta de nuevo.'); }
+  }).render('#' + containerId);
+}
+
+// Aplica la renovación (extiende 30 días)
+async function applyRenewal({ orderID, amount, licenseType }) {
+  const uid = $auth.currentUser?.uid;
+  if (!uid) throw new Error('No autenticado');
+  const u = await $db.collection('users').doc(uid).get();
+  const tenantId = u.data()?.tenantId;
+  if (!tenantId) throw new Error('Sin tenant');
+
+  const tRef = $db.collection('tenants').doc(tenantId);
+  await $db.runTransaction(async (tx) => {
+    const t = await tx.get(tRef);
+    if (!t.exists) throw new Error('Tenant no existe');
+    const meta = t.data().meta || {};
+
+    // Solo owner
+    if (meta.ownerUid !== uid) throw new Error('Solo el owner puede renovar');
+
+    const base = Math.max(Date.now(), meta.periodEnd?.toMillis?.() || Date.now());
+    const DAY = 24 * 60 * 60 * 1000, PLUS = 30 * DAY, GRACE = 3 * DAY;
+
+    const newStart = new Date(base);                 // arranca desde el fin actual o ahora
+    const newEnd = new Date(base + PLUS);
+    const newGrace = new Date(base + PLUS + GRACE);
+
+    tx.update(tRef, {
+      'meta.plan': licenseType || meta.plan,
+      'meta.status': 'active',
+      'meta.cancelAtPeriodEnd': false,
+      'meta.periodStart': firebase.firestore.Timestamp.fromDate(newStart),
+      'meta.periodEnd': firebase.firestore.Timestamp.fromDate(newEnd),
+      'meta.periodEndGrace': firebase.firestore.Timestamp.fromDate(newGrace),
+      'meta.renewalsCount': (meta.renewalsCount || 0) + 1,
+      'meta.lastPayment': {
+        orderId: orderID,
+        amountUSD: Number(amount),
+        paidAt: firebase.firestore.FieldValue.serverTimestamp()
+      }
+    });
+
+    // historial (opcional)
+    tx.set(tRef.collection('payments').doc(orderID), {
+      orderId: orderID,
+      amountUSD: Number(amount),
+      plan: licenseType || meta.plan,
+      type: 'renewal',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      by: uid
+    });
+  });
+}
+
+// ===============
+// Cancelaciones
+// ===============
+async function cancelAtPeriodEndLanding() {
+  try {
+    const { tenantId, meta } = await loadTenantMetaForCurrentUser();
+    await $db.collection('tenants').doc(tenantId).update({
+      'meta.cancelAtPeriodEnd': true
+    });
+    alert(`Se cancelará al finalizar el período (sigue activo hasta ${fmtDate(meta.periodEnd)}).`);
+    await landingRefreshRenewState();
+  } catch (e) {
+    console.error(e);
+    $$('#renew-error').textContent = e.message || 'No se pudo marcar la cancelación al final del período.';
+  }
+}
+
+async function cancelNowLanding() {
+  try {
+    const { tenantId } = await loadTenantMetaForCurrentUser();
+    const nowTs = firebase.firestore.Timestamp.fromDate(new Date());
+    await $db.collection('tenants').doc(tenantId).update({
+      'meta.status': 'canceled',
+      'meta.periodEnd': nowTs,
+      'meta.periodEndGrace': nowTs
+    });
+    alert('Acceso cancelado de inmediato.');
+    await landingRefreshRenewState();
+  } catch (e) {
+    console.error(e);
+    $$('#renew-error').textContent = e.message || 'No se pudo cancelar de inmediato.';
+  }
+}
+
+// ===============
+// Estado en la Landing
+// ===============
+async function landingRefreshRenewState() {
+  const boxOut = $$('#renew-logged-out');
+  const boxLoad = $$('#renew-loading');
+  const boxIn = $$('#renew-logged-in');
+
+  if (!$auth.currentUser) {
+    boxOut.hidden = false;
+    boxLoad.hidden = true;
+    boxIn.hidden = true;
+    return;
+  }
+
+  // Logueado
+  boxOut.hidden = true;
+  boxLoad.hidden = false;
+  boxIn.hidden = true;
+
+  try {
+    const { tenantId, meta } = await loadTenantMetaForCurrentUser();
+    showRenewData({ tenantId, meta, email: $auth.currentUser.email });
+
+    boxLoad.hidden = true;
+    boxIn.hidden = false;
+
+    // Render PayPal al pulsar el botón (evita render doble)
+    $$('#btn-render-renew').onclick = () => {
+      renderRenewPayPalButton({ amount: meta.amountUSD || '30.00', licenseType: meta.plan || 'basic' });
+      document.getElementById('paypal-renew')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+  } catch (e) {
+    console.error(e);
+    $$('#renew-error').textContent = e.message || 'No se pudo cargar la licencia.';
+    boxLoad.hidden = true;
+    boxIn.hidden = false; // mostramos el contenedor para ver el error
+  }
+}
+
+// ===============
+// Login modal (landing)
+// ===============
+(function landingAuthUI() {
+  const modal = $$('#login-modal');
+  const openBtn = $$('#btn-open-login');
+  const closeBtn = $$('#login-close');
+  const form = $$('#login-form');
+  const err = $$('#login-error');
+
+  openBtn?.addEventListener('click', () => { modal.classList.add('show'); $$('#login-email').focus(); });
+  closeBtn?.addEventListener('click', () => { modal.classList.remove('show'); err.textContent = ''; });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    const email = $$('#login-email').value.trim();
+    const pass = $$('#login-pass').value;
+    const btn = $$('#login-submit'); btn.disabled = true;
+    try {
+      await $auth.signInWithEmailAndPassword(email, pass);
+      modal.classList.remove('show');
+      await landingRefreshRenewState();
+    } catch (e2) {
+      console.error(e2);
+      err.textContent = e2?.message || 'Error al iniciar sesión';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Logout
+  $$('#btn-logout')?.addEventListener('click', async () => {
+    await $auth.signOut();
+    document.getElementById('paypal-renew').innerHTML = '';
+    await landingRefreshRenewState();
+  });
+
+  // Botones cancelar
+  $$('#btn-cancel-later')?.addEventListener('click', cancelAtPeriodEndLanding);
+  $$('#btn-cancel-now')?.addEventListener('click', cancelNowLanding);
+
+  // Estado inicial
+  $auth.onAuthStateChanged(() => {
+    // Cuando cambia el auth, refresca bloque de renovación
+    landingRefreshRenewState();
+  });
+})();
