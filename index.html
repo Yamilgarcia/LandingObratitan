@@ -14,10 +14,13 @@
 
 
 <body>
+
+
     <!-- Decor (parallax shapes) -->
     <div class="decor decor-1"></div>
     <div class="decor decor-2"></div>
     <div class="decor decor-3"></div>
+
 
     <!-- Header -->
     <header class="site-header">
@@ -83,6 +86,49 @@
                             <button id="cl-add" class="btn btn-outline" type="button">Agregar línea</button>
                         </div>
                     </div>
+
+                    <!-- ===== CARRUSEL PRINCIPAL ===== -->
+<div class="carousel-container"
+     data-aspect="16/9"
+     data-interval="5200"
+     data-autoplay="true"
+     data-kenburns="true"
+     data-progress="true"
+     data-parallax-caption="true">
+
+    <div class="carousel" id="main-carousel" aria-roledescription="carousel">
+        <div class="carousel-slide active">
+        <img src="assets/carrucel/video1.png" loading="lazy" alt="Gestión de proyectos">
+        <div class="carousel-caption">
+            <h4>Gestión de proyectos eficiente</h4>
+            <p class="muted">Planea, ejecuta y controla en un solo lugar.</p>
+        </div>
+        </div>
+
+        <div class="carousel-slide">
+        <img src="assets/carrucel/video2.png" loading="lazy" alt="Control de gastos">
+        <div class="carousel-caption">
+            <h4>Control de gastos en tiempo real</h4>
+            <p class="muted">KPI de caja y decisiones a tiempo.</p>
+        </div>
+        </div>
+
+        <div class="carousel-slide">
+        <img src="assets/carrucel/video3.png" loading="lazy" alt="Colaboración en equipo">
+        <div class="carousel-caption">
+            <h4>Colaboración y comunicación centralizada</h4>
+            <p class="muted">Menos WhatsApp, más resultados.</p>
+        </div>
+        </div>
+
+        <button class="carousel-btn prev" id="carousel-prev" aria-label="Anterior">❮</button>
+        <button class="carousel-btn next" id="carousel-next" aria-label="Siguiente">❯</button>
+
+        <div class="carousel-progress"><span></span></div>
+    </div>
+
+    <div class="carousel-indicators" id="carousel-indicators"></div>
+    </div>
 
                     <div class="calc-lite__tablewrap">
                         <table class="calc-lite__table">
@@ -205,7 +251,6 @@
                     <h3>Ve lo importante primero</h3>
                     <p class="text-muted">Un panel que prioriza presupuesto vs. ejecutado, caja disponible y alertas de
                         desvío.</p>
-                   
                 </div>
             </div>
         </section>
@@ -290,7 +335,7 @@
             <div class="grid">
                 <article class="card tilt">
                     <h4>Basic</h4>
-                    <p class="price">$30 / mes</p>
+                    <p class="price">$6 / mes</p>
                     <ul class="features">
                         <li>Dashboard esencial</li>
                         <li>1 tenant (dueño)</li>
@@ -306,7 +351,7 @@
                 <article class="card highlight tilt">
                     <div class="badge">Popular</div>
                     <h4>Pro</h4>
-                    <p class="price">$80 / mes</p>
+                    <p class="price">$15 / mes</p>
                     <ul class="features">
                         <li>Todo lo de Basic</li>
                         <li>Reportes avanzados</li>
