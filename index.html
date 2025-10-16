@@ -478,7 +478,6 @@
             <small>© <span id="year"></span> ObraTitan by Huntrix. Todos los derechos reservados.</small>
         </div>
     </footer>
-    <a href="#planes" class="floating-cta btn">Comprar licencia</a>
 
     <script>
         window.OBT_CONFIG = {
@@ -554,6 +553,87 @@
   </div>
 </div>
 <script defer src="assets/app.js"></script>
+
+<!-- 1) Carga del web component (oficial) -->
+<script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+
+<!-- 2) Messenger -->
+<df-messenger
+  chat-title="🐈‍⬛ Fushi"
+  agent-id="c1192ce0-8275-410b-abce-2ead1dbf2613"
+  language-code="es">
+</df-messenger>
+
+<!-- 3) Estilo actualizado (azul oscuro + ajuste de posición) -->
+<style>
+  df-messenger {
+    /* ==== Cabecera y botón flotante ==== */
+    --df-messenger-titlebar-color: #1e293b;
+    --df-messenger-titlebar-font-color: #ffffff;
+    --df-messenger-button-titlebar-color: #1e293b;
+
+    /* ==== Fondo del chat ==== */
+    --df-messenger-chat-background-color: #0b1220;
+    --df-messenger-font-color: #0b1220;
+
+    /* ==== Mensajes ==== */
+    --df-messenger-message-bot-background-color: #243145;
+    --df-messenger-message-bot-font-color: #ffffff;
+    --df-messenger-message-user-background-color: #E3A008;
+    --df-messenger-message-user-font-color: #111;
+
+    /* ==== Caja de entrada ==== */
+    --df-messenger-input-box-color: #ffffff;
+    --df-messenger-input-font-color: #0b1220;
+    --df-messenger-input-placeholder-color: #9ca3af;
+
+    /* ==== Contenedor general ==== */
+    border-radius: 16px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    z-index: 9999 !important;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+  }
+
+  /* 💬 Ajuste directo a la burbuja flotante (mantiene separación del botón de compra) */
+  df-messenger .df-messenger-button {
+    bottom: 00px !important; /* Sube la burbuja */
+    right: 24px !important;
+    transform: scale(1.05);
+  }
+
+  /* En móviles, subimos aún más por el menor espacio */
+  @media (max-width: 480px) {
+    df-messenger .df-messenger-button {
+      bottom: 130px !important;
+    }
+  }
+</style>
+
+<!-- 4) Ajuste dinámico: mueve el panel solo cuando se abre -->
+<script>
+  (function () {
+    const df = document.querySelector("df-messenger");
+    const fab = document.querySelector(".floating-cta");
+    if (!df || !fab) return;
+
+    const GAP = 20; // espacio entre panel y botón
+    const EXTRA = 60; // extra para el input inferior del chat
+
+    function adjustPanel() {
+      const vh = innerHeight || document.documentElement.clientHeight;
+      const fabRect = fab.getBoundingClientRect();
+      const distance = Math.max(0, vh - fabRect.top);
+      df.style.bottom = distance + GAP + EXTRA + "px";
+    }
+
+    // Aplica solo al abrir el chat
+    const observer = new MutationObserver(() => adjustPanel());
+    observer.observe(df, { attributes: true, attributeFilter: ["opened"] });
+
+    addEventListener("resize", adjustPanel, { passive: true });
+  })();
+</script>
+
 
 </body>
 
